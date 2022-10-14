@@ -163,9 +163,9 @@ describe("Topup contract", function () {
         const platformPercent = 100 - (treasuryPercent + partnerPercent);
         const amountToTopup = rand(1, 100_000_000);
 
-        const treasuryMustReceive = Math.floor(amountToTopup * treasuryPercent / 100);
-        const partnerMustReceive = Math.floor(amountToTopup * partnerPercent / 100);
-        const platformMustReceive = Math.floor(amountToTopup * platformPercent / 100);
+        const treasuryMustReceive = amountToTopup * treasuryPercent / 100;
+        const partnerMustReceive = amountToTopup * partnerPercent / 100;
+        const platformMustReceive = amountToTopup * platformPercent / 100;
 
         await topupContract.setPercent(
           ethers.BigNumber.from(treasuryPercent * 10 ** 8),
@@ -175,11 +175,11 @@ describe("Topup contract", function () {
 
         await currencyTokenContract.mint(user.address, ethers.utils.parseEther(amountToTopup.toString()));
         await currencyTokenContract.connect(user).approve(topupContract.address, ethers.constants.MaxUint256);
-        await topupContract.connect(user).topup(amountToTopup.toString(), "REF");
+        await topupContract.connect(user).topup(ethers.utils.parseEther(amountToTopup.toString()), "REF");
 
-        expect(await currencyTokenContract.balanceOf(treasury.address)).to.eq(treasuryMustReceive);
-        expect(await currencyTokenContract.balanceOf(partner.address)).to.eq(partnerMustReceive);
-        expect(await currencyTokenContract.balanceOf(platform.address)).to.eq(platformMustReceive);
+        expect(await currencyTokenContract.balanceOf(treasury.address)).to.eq(ethers.utils.parseEther(treasuryMustReceive.toString()));
+        expect(await currencyTokenContract.balanceOf(partner.address)).to.eq(ethers.utils.parseEther(partnerMustReceive.toString()));
+        expect(await currencyTokenContract.balanceOf(platform.address)).to.eq(ethers.utils.parseEther(platformMustReceive.toString()));
 
         expect(await currencyTokenContract.balanceOf(topupContract.address)).to.eq(ethers.constants.Zero);
       }
@@ -190,6 +190,15 @@ describe("Topup contract", function () {
       }
 
 
+    });
+
+    it("Should not topup with empty reference code", async () => {
+      const { topupContract, currencyTokenContract, user } = await loadFixture(deployFixture);
+
+      const amountToTopup = rand(1, 100_000_000);
+      await currencyTokenContract.mint(user.address, ethers.utils.parseEther(amountToTopup.toString()));
+      await currencyTokenContract.connect(user).approve(topupContract.address, ethers.constants.MaxUint256);
+      await expect(topupContract.connect(user).topup(ethers.utils.parseEther(amountToTopup.toString()), "")).to.revertedWith("Ref code must not be empty");
     });
   });
 });
