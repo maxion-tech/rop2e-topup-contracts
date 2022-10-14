@@ -33,7 +33,16 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
         uint256 newPartnerPercent,
         uint256 newPlatformPercent
     );
-    event EventTopup(uint256 amount, string refCode);
+    event EventTopup(
+        uint256 amount,
+        string refCode,
+        uint256 treasuryPercent,
+        uint256 partnerPercent,
+        uint256 platformPercent,
+        uint256 treasuryReceived,
+        uint256 partnerReceived,
+        uint256 platformReceived
+    );
 
     // Modifter for check not zero and sum of all percent must be 100
     modifier onlyValidPercent(
@@ -147,7 +156,16 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
         uint256 treasuryAmount = this.calculateTreasuryAmount(amount);
         uint256 partnerAmount = this.calculatePartnerAmount(amount);
         uint256 platformAmount = this.calculatePlatformAmount(amount);
-        emit EventTopup(amount, refCode);
+        emit EventTopup(
+            amount,
+            refCode,
+            treasuryPercent,
+            partnerPercent,
+            platformPercent,
+            treasuryAmount,
+            partnerAmount,
+            platformAmount
+        );
         currencyToken.safeTransferFrom(
             _msgSender(),
             treasuryAddress,
