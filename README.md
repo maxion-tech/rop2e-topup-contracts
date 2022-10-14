@@ -1,6 +1,6 @@
-# Sample Hardhat Project
+# ROP2E Topup Smart Contracts
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+This project is for development ROP2E game topup by ERC20 token
 
 Try running some of the following tasks:
 
