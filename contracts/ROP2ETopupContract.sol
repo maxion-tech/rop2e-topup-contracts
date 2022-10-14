@@ -1,61 +1,133 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.7;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-// import "hardhat/console.sol";
 
-contract ROP2ETopupContract is Pausable, Ownable, ReentrancyGuard {
+contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
     uint256 private constant DENOMINATOR = 10**10; // 10**10
-    IERC20 public currencyContract;
+    IERC20 public currencyToken;
+
+    address public treasuryAddress;
     address public partnerAddress;
     address public platformAddress;
 
-    // Split of  percent
-    uint256 private platformPercent;
-    uint256 private partnerPercent;
+    // Split of percent
+    uint256 public treasuryPercent;
+    uint256 public partnerPercent;
+    uint256 public platformPercent;
+
+    // Events
+    event EventSetTreasuryAddress(address newTreasuryAddress);
+    event EventSetPartnerAddress(address newPartnerAddress);
+    event EventSetPlatformAddress(address newPlatformAddress);
+    event EventSetCurrencyTokenAddress(address newCurrencyTokenAddress);
+    event EventSetPercent(
+        uint256 newTreasuryPercent,
+        uint256 newPartnerPercent,
+        uint256 newPlatformPercent
+    );
+    event EventTopup(uint256 amount, string refCode);
+
+    // Modifter for check not zero and sum of all percent must be 100
+    modifier onlyValidPercent(
+        uint256 newTreasuryPercent,
+        uint256 newPartnerPercent,
+        uint256 newPlatformPercent
+    ) {
+        require(newTreasuryPercent > 0, "Treasury percent must not be zero");
+        require(newPartnerPercent > 0, "Partner percent must not be zero");
+        require(newPlatformPercent > 0, "Platform percent must not be zero");
+
+        uint256 treasuryPercentDeno = newTreasuryPercent.mul(100).div(
+            DENOMINATOR
+        );
+        uint256 partnerPercentDeno = newPartnerPercent.mul(100).div(
+            DENOMINATOR
+        );
+        uint256 platformPercentDeno = newPlatformPercent.mul(100).div(
+            DENOMINATOR
+        );
+        uint256 totalPercent = treasuryPercentDeno.add(partnerPercentDeno).add(
+            platformPercentDeno
+        );
+        require(totalPercent == 100, "Total percent must be 100");
+        _;
+    }
 
     constructor(
-        address _currencyContractAddress,
-        address _platformAddress,
-        address _partnerAddress,
+        address _currencyTokenAddress,
         address _treasuryAddress,
-        uint256 _platformPercent,
-        uint256 _partnerPercent
-        ){
-        require(_currencyContractAddress != address(0), "Currency contract must not be zero");
-        require(_platformAddress != address(0), "Platform address must not be zero");
-        require(_partnerAddress != address(0), "Partner address must not be zero");
-        require(_treasuryAddress != address(0), "Treasury address must not be zero");
-
-        require(_platformPercent > 0, "Platform percent must not be zero");
-        require(_partnerPercent > 0, "Partner percent must not be zero");
-
-        uint256 partnerPercentDeno = partnerPercent.mul(100).div(
-            DENOMINATOR
+        address _partnerAddress,
+        address _platformAddress,
+        uint256 _treasuryPercent,
+        uint256 _partnerPercent,
+        uint256 _platformPercent
+    ) onlyValidPercent(_treasuryPercent, _partnerPercent, _platformPercent) {
+        require(
+            _currencyTokenAddress != address(0),
+            "Currency contract must not be zero"
         );
-        uint256 platformPercentDeno = platformPercent.mul(100).div(
-            DENOMINATOR
+
+        require(
+            _treasuryAddress != address(0),
+            "Treasury address must not be zero"
         );
-        uint256 totalPercent = partnerPercentDeno.add(platformPercentDeno);
-        require(totalPercent < 100, "Total percent must less than 100");
+        require(
+            _partnerAddress != address(0),
+            "Partner address must not be zero"
+        );
+        require(
+            _platformAddress != address(0),
+            "Platform address must not be zero"
+        );
 
         // Set currency contract
-        currencyContract = IERC20(_currencyContractAddress);
-        
-        // Set percent
-        platformPercent = _platformPercent;
-        partnerPercent = _partnerPercent;
+        currencyToken = IERC20(_currencyTokenAddress);
 
         // Set address
-        platformAddress = _platformAddress;
+        treasuryAddress = _treasuryAddress;
         partnerAddress = _partnerAddress;
+        platformAddress = _platformAddress;
+
+        // Set percent
+        treasuryPercent = _treasuryPercent;
+        partnerPercent = _partnerPercent;
+        platformPercent = _platformPercent;
+
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+
+        // Init event trigger
+        emit EventSetTreasuryAddress(_treasuryAddress);
+        emit EventSetPartnerAddress(_partnerAddress);
+        emit EventSetPlatformAddress(_platformAddress);
+        emit EventSetPercent(
+            _treasuryPercent,
+            _partnerPercent,
+            _platformPercent
+        );
+    }
+
+    function calculateTreasuryAmount(uint256 topupAmount)
+        external
+        view
+        returns (uint256 amount)
+    {
+        return topupAmount.mul(treasuryPercent).div(DENOMINATOR);
+    }
+
+    function calculatePartnerAmount(uint256 topupAmount)
+        external
+        view
+        returns (uint256 amount)
+    {
+        return topupAmount.mul(partnerPercent).div(DENOMINATOR);
     }
 
     function calculatePlatformAmount(uint256 topupAmount)
@@ -66,33 +138,110 @@ contract ROP2ETopupContract is Pausable, Ownable, ReentrancyGuard {
         return topupAmount.mul(platformPercent).div(DENOMINATOR);
     }
 
-   function calculatePartnerAmount(uint256 _topupAmount)
+    function topup(uint256 amount, string calldata refCode)
         external
-        view
-        returns (uint256 amount)
+        nonReentrant
+        whenNotPaused
     {
-        return _topupAmount.mul(partnerPercent).div(DENOMINATOR);
+        require(bytes(refCode).length > 0, "Ref code must not be empty");
+        uint256 treasuryAmount = this.calculateTreasuryAmount(amount);
+        uint256 partnerAmount = this.calculatePartnerAmount(amount);
+        uint256 platformAmount = this.calculatePlatformAmount(amount);
+        emit EventTopup(amount, refCode);
+        currencyToken.safeTransferFrom(
+            _msgSender(),
+            treasuryAddress,
+            treasuryAmount
+        );
+        currencyToken.safeTransferFrom(
+            _msgSender(),
+            partnerAddress,
+            partnerAmount
+        );
+        currencyToken.safeTransferFrom(
+            _msgSender(),
+            platformAddress,
+            platformAmount
+        );
     }
 
-    // For display don't use for calculation use calculatePlatformAmount instead
-    function getPlatformPercent() external view returns (uint256 percent) {
-        return platformPercent.mul(DENOMINATOR);
+    function setPercent(
+        uint256 newTreasuryPercent,
+        uint256 newPartnerPercent,
+        uint256 newPlatformPercent
+    )
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyValidPercent(
+            newTreasuryPercent,
+            newPartnerPercent,
+            newPlatformPercent
+        )
+    {
+        treasuryPercent = newTreasuryPercent;
+        partnerPercent = newPartnerPercent;
+        platformPercent = newPlatformPercent;
+        emit EventSetPercent(
+            newTreasuryPercent,
+            newPartnerPercent,
+            newPlatformPercent
+        );
     }
 
-    // For display don't use for calculation use calculatePartnerAmount instead
-    function getPertnerPercent() external view returns (uint256 percent) {
-        return partnerPercent.mul(DENOMINATOR);
+    function setTreasuryAddress(address newTreasuryAddress)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        require(
+            newTreasuryAddress != address(0),
+            "Treasury address must not be zero"
+        );
+        treasuryAddress = newTreasuryAddress;
+        emit EventSetTreasuryAddress(newTreasuryAddress);
     }
 
-    function topup(uint256 amount, string calldata refCode) external nonReentrant whenNotPaused{
-
+    function setPartnerAddress(address newPartnerAddress)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        require(
+            newPartnerAddress != address(0),
+            "Partner address must not be zero"
+        );
+        partnerAddress = newPartnerAddress;
+        emit EventSetPartnerAddress(newPartnerAddress);
     }
 
-    function pause() external onlyOwner {
+    function setPlatformAddress(address newPlatformAddress)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        require(
+            newPlatformAddress != address(0),
+            "Platform address must not be zero"
+        );
+        platformAddress = newPlatformAddress;
+        emit EventSetPlatformAddress(newPlatformAddress);
+    }
+
+    function setCurrencyTokenAddress(address newCurrencyTokenAddress)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        require(
+            newCurrencyTokenAddress != address(0),
+            "Currency contract must not be zero"
+        );
+
+        currencyToken = IERC20(newCurrencyTokenAddress);
+        emit EventSetCurrencyTokenAddress(newCurrencyTokenAddress);
+    }
+
+    function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
 
-    function unpause() external onlyOwner {
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }
 }
