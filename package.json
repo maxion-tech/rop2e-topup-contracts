@@ -2,8 +2,10 @@
   "name": "hardhat-project",
   "scripts": {
     "build": "hardhat compile",
+    "clean": "hardhat clean",
     "test": "hardhat test",
-    "deploy:bscTestnet": "hardhat run scripts/deploy.ts --network bscTestnet"
+    "deploy-topup:bscTestnet": "hardhat run scripts/deploy_topup.ts --network bscTestnet",
+    "deploy-topup-intermediary:bscTestnet": "hardhat run scripts/deploy_topup_intermediary.ts --network bscTestnet"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^1.0.2",
