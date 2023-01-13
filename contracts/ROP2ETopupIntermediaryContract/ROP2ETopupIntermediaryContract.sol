@@ -51,12 +51,17 @@ contract ROP2ETopupIntermediaryContract is AccessControl {
         onlyRole(TOPUP_ROLE)
     {
         emit EventTopup(amount, refCode);
+        uint256 balanceBefore = ionStablecoinUnderlying.balanceOf(
+            address(this)
+        );
         ionStablecoinUnderlying.safeTransferFrom(
             msg.sender,
             address(this),
             amount
         );
-        ionStablecoin.depositFor(address(this), amount);
+        uint256 balanceAfter = ionStablecoinUnderlying.balanceOf(address(this));
+        uint256 amountToDeposit = balanceAfter - balanceBefore;
+        ionStablecoin.depositFor(address(this), amountToDeposit);
         roP2ETopupContract.topup(amount, refCode);
     }
 }
