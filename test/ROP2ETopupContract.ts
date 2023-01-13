@@ -12,6 +12,8 @@ describe("Topup contract", function () {
   async function deployFixture() {
     const [
       owner,
+      admin,
+
       treasury,
       partner,
       user,
@@ -42,6 +44,7 @@ describe("Topup contract", function () {
       treasuryPercent,
       partnerPercent,
       platformPercent,
+      admin.address,
     );
 
     return {
@@ -53,7 +56,7 @@ describe("Topup contract", function () {
       platformPercent,
 
       owner,
-
+      admin,
       treasury,
       platform,
       partner,
@@ -69,8 +72,8 @@ describe("Topup contract", function () {
 
   describe("Deployment", () => {
     it("Should set the right owner", async () => {
-      const { topupContract, owner } = await loadFixture(deployFixture);
-      expect(await topupContract.hasRole(DEFAULT_ADMIN_ROLE, owner.address)).to.equal(true);
+      const { topupContract, admin } = await loadFixture(deployFixture);
+      expect(await topupContract.hasRole(DEFAULT_ADMIN_ROLE, admin.address)).to.equal(true);
     });
 
     it("Should set the right currency", async () => {
@@ -97,34 +100,34 @@ describe("Topup contract", function () {
   describe("State config", () => {
 
     it("Should set treasury address", async () => {
-      const { topupContract, treasuryNew } = await loadFixture(deployFixture);
-      await topupContract.setTreasuryAddress(treasuryNew.address);
+      const { topupContract, admin, treasuryNew } = await loadFixture(deployFixture);
+      await topupContract.connect(admin).setTreasuryAddress(treasuryNew.address);
       expect(await topupContract.treasuryAddress()).to.eq(treasuryNew.address);
     });
 
     it("Should set treasury address", async () => {
-      const { topupContract, partnerNew } = await loadFixture(deployFixture);
-      await topupContract.setPartnerAddress(partnerNew.address);
+      const { topupContract, admin, partnerNew } = await loadFixture(deployFixture);
+      await topupContract.connect(admin).setPartnerAddress(partnerNew.address);
       expect(await topupContract.partnerAddress()).to.eq(partnerNew.address);
     });
 
     it("Should set platform address", async () => {
-      const { topupContract, platformNew } = await loadFixture(deployFixture);
-      await topupContract.setPlatformAddress(platformNew.address);
+      const { topupContract, admin, platformNew } = await loadFixture(deployFixture);
+      await topupContract.connect(admin).setPlatformAddress(platformNew.address);
       expect(await topupContract.platformAddress()).to.eq(platformNew.address);
     });
 
     it("Should not set zero address", async () => {
-      const { topupContract } = await loadFixture(deployFixture);
-      await expect(topupContract.setTreasuryAddress(ethers.constants.AddressZero)).to.revertedWith("Treasury address must not be zero");
-      await expect(topupContract.setPartnerAddress(ethers.constants.AddressZero)).to.revertedWith("Partner address must not be zero");
-      await expect(topupContract.setPlatformAddress(ethers.constants.AddressZero)).to.revertedWith("Platform address must not be zero");
-      await expect(topupContract.setCurrencyTokenAddress(ethers.constants.AddressZero)).to.revertedWith("Currency contract must not be zero");
+      const { topupContract, admin } = await loadFixture(deployFixture);
+      await expect(topupContract.connect(admin).setTreasuryAddress(ethers.constants.AddressZero)).to.revertedWith("Treasury address must not be zero");
+      await expect(topupContract.connect(admin).setPartnerAddress(ethers.constants.AddressZero)).to.revertedWith("Partner address must not be zero");
+      await expect(topupContract.connect(admin).setPlatformAddress(ethers.constants.AddressZero)).to.revertedWith("Platform address must not be zero");
+      await expect(topupContract.connect(admin).setCurrencyTokenAddress(ethers.constants.AddressZero)).to.revertedWith("Currency contract must not be zero");
     });
 
     it("Should set percent", async () => {
-      const { topupContract } = await loadFixture(deployFixture);
-      await topupContract.setPercent(
+      const { topupContract, admin } = await loadFixture(deployFixture);
+      await topupContract.connect(admin).setPercent(
         ethers.BigNumber.from(30 * 10 ** 8), // 30% treasury
         ethers.BigNumber.from(40 * 10 ** 8), // 40% partner
         ethers.BigNumber.from(30 * 10 ** 8)); // 30% platform
@@ -135,9 +138,9 @@ describe("Topup contract", function () {
     });
 
     it("Should can not set percent more than 100%", async () => {
-      const { topupContract } = await loadFixture(deployFixture);
+      const { topupContract, admin } = await loadFixture(deployFixture);
       // Error if set total percent more than 100
-      await expect(topupContract.setPercent(
+      await expect(topupContract.connect(admin).setPercent(
         ethers.BigNumber.from(31 * 10 ** 8), // 31% treasury
         ethers.BigNumber.from(42 * 10 ** 8), // 42% partner
         ethers.BigNumber.from(28 * 10 ** 8)) // 28% platform
@@ -145,8 +148,8 @@ describe("Topup contract", function () {
     });
 
     it("Should set currency token address", async () => {
-      const { topupContract, currencyTokenContractNew } = await loadFixture(deployFixture);
-      await topupContract.setCurrencyTokenAddress(currencyTokenContractNew.address);
+      const { topupContract, admin, currencyTokenContractNew } = await loadFixture(deployFixture);
+      await topupContract.connect(admin).setCurrencyTokenAddress(currencyTokenContractNew.address);
       expect(await topupContract.currencyToken()).to.eq(currencyTokenContractNew.address);
     });
 
@@ -156,7 +159,7 @@ describe("Topup contract", function () {
 
     it("Should topup 100 times with random fee and topup amount", async () => {
       const topupTestWithRandomNumber = async () => {
-        const { topupContract, currencyTokenContract, user, treasury, partner, platform } = await loadFixture(deployFixture);
+        const { topupContract, currencyTokenContract, admin, user, treasury, partner, platform } = await loadFixture(deployFixture);
 
         const treasuryPercent = rand(10, 20);
         const partnerPercent = rand(10, 20);
@@ -167,7 +170,7 @@ describe("Topup contract", function () {
         const partnerMustReceive = amountToTopup * partnerPercent / 100;
         const platformMustReceive = amountToTopup * platformPercent / 100;
 
-        await topupContract.setPercent(
+        await topupContract.connect(admin).setPercent(
           ethers.BigNumber.from(treasuryPercent * 10 ** 8),
           ethers.BigNumber.from(partnerPercent * 10 ** 8),
           ethers.BigNumber.from(platformPercent * 10 ** 8),

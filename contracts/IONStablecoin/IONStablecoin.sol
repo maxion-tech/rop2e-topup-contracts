@@ -40,17 +40,17 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
         string memory tokenSymbol,
         IERC20 underlyingToken,
         uint256 initDepositFeePercent,
-        uint256 initWithdrawFeePercent
+        uint256 initWithdrawFeePercent,
+        address admin
     ) ERC20(tokenName, tokenSymbol) ERC20Wrapper(underlyingToken) {
         require(
             address(underlyingToken) != address(0),
             "Underlying token must not be zero address"
         );
-
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(PAUSER_ROLE, msg.sender);
-        _grantRole(ZERO_FEE_ROLE, msg.sender);
-
+        require(
+            address(admin) != address(0) && address(admin) != msg.sender,
+            "Admin address must not be zero or msg.sender"
+        );
         require(
             initDepositFeePercent <= MAX_FEE,
             "Deposit fee must be greater than zero and less than max fee"
@@ -63,6 +63,8 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
 
         depositFeePercent = initDepositFeePercent;
         withdrawFeePercent = initWithdrawFeePercent;
+
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     function pause() external onlyRole(PAUSER_ROLE) {
@@ -130,7 +132,6 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
 
         return true;
     }
-
 
     /**
      * @dev Allow a user to burn a number of wrapped tokens and withdraw the corresponding number of underlying tokens.
