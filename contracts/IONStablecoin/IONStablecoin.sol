@@ -60,7 +60,7 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
             initWithdrawFeePercent <= MAX_FEE,
             "Withdraw fee must be greater than zero and less than max fee"
         );
-        
+
         depositFeePercent = initDepositFeePercent;
         withdrawFeePercent = initWithdrawFeePercent;
     }
@@ -93,7 +93,9 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
             fee = 0;
             amountAfterFee = amount;
         } else {
-            fee = (amount * (deposit ? depositFeePercent : withdrawFeePercent)) / FEE_DENOMINATOR;
+            fee =
+                (amount * (deposit ? depositFeePercent : withdrawFeePercent)) /
+                FEE_DENOMINATOR;
             amountAfterFee = amount - fee;
         }
     }
@@ -107,24 +109,28 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
         override
         returns (bool)
     {
-        (uint256 fee, uint256 amountAfterFee) = calculateFee(
-            _msgSender(),
-            amount,
-            true
-        );
-
-        _mint(account, amountAfterFee);
-        feeBalance = feeBalance + fee;
-
-        emit DepositFor(account, amount, amountAfterFee, fee);
+        uint256 balanceBefore = underlying.balanceOf(address(this));
         SafeERC20.safeTransferFrom(
             underlying,
             _msgSender(),
             address(this),
             amount
         );
+        uint256 balanceAfter = underlying.balanceOf(address(this));
+        uint256 amountToMint = balanceAfter - balanceBefore;
+        (uint256 fee, uint256 amountAfterFee) = this.calculateFee(
+            _msgSender(),
+            amountToMint,
+            true
+        );
+        emit DepositFor(account, amount, amountAfterFee, fee);
+        _mint(account, amountAfterFee);
+
+        feeBalance = feeBalance + fee;
+
         return true;
     }
+
 
     /**
      * @dev Allow a user to burn a number of wrapped tokens and withdraw the corresponding number of underlying tokens.
