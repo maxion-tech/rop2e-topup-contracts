@@ -21,13 +21,13 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
     uint256 public feeBalance = 0;
 
     event DepositFor(
-        address account,
+        address indexed account,
         uint256 amount,
         uint256 amountAfterFee,
         uint256 fee
     );
     event WithdrawTo(
-        address account,
+        address indexed account,
         uint256 amount,
         uint256 amountAfterFee,
         uint256 fee
@@ -36,7 +36,7 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
     event SetDepositFee(uint256 oldFeePercent, uint256 newFeePercent);
     event SetWithdrawFee(uint256 oldFeePercent, uint256 newFeePercent);
 
-    event WithdrawFee(address account, uint256 amount);
+    event WithdrawFee(address indexed account, uint256 amount);
 
     constructor(
         string memory tokenName,
