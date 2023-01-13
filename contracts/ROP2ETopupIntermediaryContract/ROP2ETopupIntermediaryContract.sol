@@ -18,15 +18,14 @@ contract ROP2ETopupIntermediaryContract is AccessControl {
 
     event EventTopup(uint256 amount, string refCode);
 
-    constructor(address _ionStablecoinAddress, address _topupContractAddress) {
+    constructor(address _ionStablecoinAddress, address _topupContractAddress, address _adminAddress) {
         ionStablecoin = IIONStablecoin(_ionStablecoinAddress);
         ionStablecoinUnderlying = IERC20(ionStablecoin.underlying());
         roP2ETopupContract = IIROP2ETopupContract(_topupContractAddress);
         ionStablecoinUnderlying.approve(_ionStablecoinAddress, MAX_INT);
         IERC20(address(ionStablecoin)).approve(_topupContractAddress, MAX_INT);
-
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(TOPUP_ROLE, msg.sender);
+        
+        _grantRole(DEFAULT_ADMIN_ROLE, _adminAddress);
     }
 
     function approveIONStablecoinUnderlying(uint256 amount)

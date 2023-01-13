@@ -52,10 +52,12 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
         require(newPartnerPercent > 0, "Partner percent must not be zero");
         require(newPlatformPercent > 0, "Platform percent must not be zero");
 
-        uint256 treasuryPercentDeno = newTreasuryPercent * 100 / DENOMINATOR;
-        uint256 partnerPercentDeno = newPartnerPercent * 100 / DENOMINATOR;
-        uint256 platformPercentDeno = newPlatformPercent * 100 / DENOMINATOR;
-        uint256 totalPercent = treasuryPercentDeno + partnerPercentDeno + platformPercentDeno;
+        uint256 treasuryPercentDeno = (newTreasuryPercent * 100) / DENOMINATOR;
+        uint256 partnerPercentDeno = (newPartnerPercent * 100) / DENOMINATOR;
+        uint256 platformPercentDeno = (newPlatformPercent * 100) / DENOMINATOR;
+        uint256 totalPercent = treasuryPercentDeno +
+            partnerPercentDeno +
+            platformPercentDeno;
 
         require(totalPercent == 100, "Total percent must be 100");
         _;
@@ -68,7 +70,8 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
         address _platformAddress,
         uint256 _treasuryPercent,
         uint256 _partnerPercent,
-        uint256 _platformPercent
+        uint256 _platformPercent,
+        address _adminAddress
     ) onlyValidPercent(_treasuryPercent, _partnerPercent, _platformPercent) {
         require(
             _currencyTokenAddress != address(0),
@@ -87,6 +90,10 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
             _platformAddress != address(0),
             "Platform address must not be zero"
         );
+        require(
+            address(_adminAddress) != address(0) && address(_adminAddress) != msg.sender,
+            "Admin address must not be zero or msg.sender"
+        );
 
         // Set currency contract
         currencyToken = IERC20(_currencyTokenAddress);
@@ -101,7 +108,7 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
         partnerPercent = _partnerPercent;
         platformPercent = _platformPercent;
 
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, _adminAddress);
 
         // Init event trigger
         emit EventSetTreasuryAddress(_treasuryAddress);
@@ -119,7 +126,7 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
         view
         returns (uint256 amount)
     {
-        return topupAmount * treasuryPercent / DENOMINATOR;
+        return (topupAmount * treasuryPercent) / DENOMINATOR;
     }
 
     function calculatePartnerAmount(uint256 topupAmount)
@@ -127,7 +134,7 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
         view
         returns (uint256 amount)
     {
-        return topupAmount * partnerPercent / DENOMINATOR;
+        return (topupAmount * partnerPercent) / DENOMINATOR;
     }
 
     function calculatePlatformAmount(uint256 topupAmount)
@@ -135,7 +142,7 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
         view
         returns (uint256 amount)
     {
-        return topupAmount * platformPercent / DENOMINATOR;
+        return (topupAmount * platformPercent) / DENOMINATOR;
     }
 
     function topup(uint256 amount, string calldata refCode)

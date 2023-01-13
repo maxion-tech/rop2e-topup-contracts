@@ -18,7 +18,7 @@ describe("Intermediary contract", function () {
         ); // 1%
 
         // Contracts are deployed using the first signer/account by default
-        const [owner, zeroFeeAccount, otherAccount] = await ethers.getSigners();
+        const [owner, admin, zeroFeeAccount, otherAccount] = await ethers.getSigners();
 
         // Underlying token
         const UnderlyingToken = await ethers.getContractFactory("ERC20Token");
@@ -33,7 +33,8 @@ describe("Intermediary contract", function () {
             "ION",
             underlyingToken.address,
             INIT_DEPOSIT_FEE_PERCENT,
-            INIT_WITHDRAW_FEE_PERCENT
+            INIT_WITHDRAW_FEE_PERCENT,
+            admin.address
         );
 
         await ionStablecoin.deployed();
@@ -44,6 +45,7 @@ describe("Intermediary contract", function () {
             underlyingToken,
             ionStablecoin,
             owner,
+            admin,
             zeroFeeAccount,
             otherAccount,
             ZERO_FEE_ROLE,
@@ -53,6 +55,7 @@ describe("Intermediary contract", function () {
     async function deployFixtureTopupContract() {
         const [
             owner,
+            admin,
             treasury,
             partner,
             user,
@@ -83,6 +86,7 @@ describe("Intermediary contract", function () {
             treasuryPercent,
             partnerPercent,
             platformPercent,
+            admin.address,
         );
 
         return {
@@ -94,6 +98,7 @@ describe("Intermediary contract", function () {
             platformPercent,
 
             owner,
+            admin,
 
             treasury,
             platform,
@@ -110,23 +115,24 @@ describe("Intermediary contract", function () {
 
     async function deployFixtureTopupIntermediaryContract() {
 
-        const { ionStablecoin, underlyingToken, owner: IONStablecoinOwner, ZERO_FEE_ROLE } = await deployFixtureIONStablecoinContract();
+        const { ionStablecoin, underlyingToken, owner: IONStablecoinOwner, admin: IONStablecoinAdmin, ZERO_FEE_ROLE } = await deployFixtureIONStablecoinContract();
         const { topupContract, owner: topupContractOwner } = await deployFixtureTopupContract();
 
-        const [owner, topupAccount] = await ethers.getSigners();
+        const [owner, admin, topupAccount] = await ethers.getSigners();
 
         const roP2ETopupIntermediaryContractFactory = await ethers.getContractFactory("ROP2ETopupIntermediaryContract");
-        const roP2ETopupIntermediaryContract = await roP2ETopupIntermediaryContractFactory.deploy(ionStablecoin.address, topupContract.address);
+        const roP2ETopupIntermediaryContract = await roP2ETopupIntermediaryContractFactory.deploy(ionStablecoin.address, topupContract.address, admin.address);
 
         const TOPUP_ROLE = await roP2ETopupIntermediaryContract.TOPUP_ROLE();
 
         // Set new currency
-        await topupContract.setCurrencyTokenAddress(ionStablecoin.address);
+        await topupContract.connect(admin).setCurrencyTokenAddress(ionStablecoin.address);
 
 
         return {
             // ION stablecoin
             IONStablecoinOwner,
+            IONStablecoinAdmin,
             underlyingToken,
             ionStablecoin,
             ZERO_FEE_ROLE,
@@ -137,6 +143,7 @@ describe("Intermediary contract", function () {
 
             // Topup intermediary
             owner,
+            admin,
             roP2ETopupIntermediaryContract,
             topupAccount,
             TOPUP_ROLE,
@@ -150,18 +157,20 @@ describe("Intermediary contract", function () {
                 roP2ETopupIntermediaryContract,
                 topupAccount,
                 TOPUP_ROLE,
-
                 // ION stablecoin
                 ionStablecoin,
                 underlyingToken,
+                owner,
+                admin,
                 IONStablecoinOwner,
+                IONStablecoinAdmin,
                 ZERO_FEE_ROLE
             } = await deployFixtureTopupIntermediaryContract();
             // Add zero fee role to intermediary contract
-            await ionStablecoin.connect(IONStablecoinOwner).grantRole(ZERO_FEE_ROLE, roP2ETopupIntermediaryContract.address);
-            await roP2ETopupIntermediaryContract.grantRole(TOPUP_ROLE, topupAccount.address);
+            await ionStablecoin.connect(IONStablecoinAdmin).grantRole(ZERO_FEE_ROLE, roP2ETopupIntermediaryContract.address);
+            await roP2ETopupIntermediaryContract.connect(admin).grantRole(TOPUP_ROLE, topupAccount.address);
 
-            await underlyingToken.connect(IONStablecoinOwner).mint(topupAccount.address, ethers.utils.parseEther("1000"));
+            await underlyingToken.mint(topupAccount.address, ethers.utils.parseEther("1000"));
             expect(await underlyingToken.balanceOf(topupAccount.address)).to.eq(ethers.utils.parseEther("1000"));
             await underlyingToken.connect(topupAccount).approve(roP2ETopupIntermediaryContract.address, ethers.constants.MaxUint256);
 
