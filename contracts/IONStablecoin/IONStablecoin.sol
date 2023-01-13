@@ -167,7 +167,7 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
     }
 
     /**
-     * @dev Set desosit/withdraw fee. For admin only
+     * @dev Set deposit/withdraw fee. For admin only
      */
     function setFee(uint256 newPercent, bool deposit)
         external
