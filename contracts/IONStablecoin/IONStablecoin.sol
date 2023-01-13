@@ -92,7 +92,7 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
         address account,
         uint256 amount,
         bool deposit
-    ) external view returns (uint256 fee, uint256 amountAfterFee) {
+    ) public view returns (uint256 fee, uint256 amountAfterFee) {
         if (hasRole(ZERO_FEE_ROLE, account)) {
             fee = 0;
             amountAfterFee = amount;
@@ -113,7 +113,7 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
         override
         returns (bool)
     {
-        (uint256 fee, uint256 amountAfterFee) = this.calculateFee(
+        (uint256 fee, uint256 amountAfterFee) = calculateFee(
             _msgSender(),
             amount,
             true
@@ -141,7 +141,7 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
         override
         returns (bool)
     {
-        (uint256 fee, uint256 amountAfterFee) = this.calculateFee(
+        (uint256 fee, uint256 amountAfterFee) = calculateFee(
             _msgSender(),
             amount,
             false
