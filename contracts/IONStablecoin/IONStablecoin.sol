@@ -54,6 +54,17 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(ZERO_FEE_ROLE, msg.sender);
 
+        // check fee is not zero and less than max fee
+        require(
+            initDepositFeePercent > 0 && initDepositFeePercent <= MAX_FEE,
+            "Deposit fee must be greater than zero and less than max fee"
+        );
+
+        require(
+            initWithdrawFeePercent > 0 && initWithdrawFeePercent <= MAX_FEE,
+            "Withdraw fee must be greater than zero and less than max fee"
+        );
+        
         depositFeePercent = initDepositFeePercent;
         withdrawFeePercent = initWithdrawFeePercent;
     }
