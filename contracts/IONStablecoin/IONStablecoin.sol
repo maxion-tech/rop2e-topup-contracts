@@ -5,11 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Wrapper.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
-    using SafeMath for uint256;
-
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant ZERO_FEE_ROLE = keccak256("ZERO_FEE_ROLE");
 
@@ -97,10 +94,8 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
             fee = 0;
             amountAfterFee = amount;
         } else {
-            fee = amount
-                .mul(deposit ? depositFeePercent : withdrawFeePercent)
-                .div(FEE_DENOMINATOR);
-            amountAfterFee = amount.sub(fee);
+            fee = (amount * (deposit ? depositFeePercent : withdrawFeePercent)) / FEE_DENOMINATOR;
+            amountAfterFee = amount - fee;
         }
     }
 
@@ -120,7 +115,7 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
         );
 
         _mint(account, amountAfterFee);
-        feeBalance = feeBalance.add(fee);
+        feeBalance = feeBalance + fee;
 
         emit DepositFor(account, amount, amountAfterFee, fee);
         SafeERC20.safeTransferFrom(
@@ -147,7 +142,7 @@ contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
             false
         );
         _burn(_msgSender(), amount);
-        feeBalance = feeBalance.add(fee);
+        feeBalance = feeBalance + fee;
         emit WithdrawTo(account, amount, amountAfterFee, fee);
         SafeERC20.safeTransfer(underlying, account, amountAfterFee);
         return true;
