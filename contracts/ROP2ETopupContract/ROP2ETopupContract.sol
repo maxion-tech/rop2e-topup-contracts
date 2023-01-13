@@ -4,12 +4,10 @@ pragma solidity =0.8.7;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
-    using SafeMath for uint256;
 
     uint256 private constant DENOMINATOR = 10**10; // 10**10
     IERC20 public currencyToken;
@@ -54,18 +52,11 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
         require(newPartnerPercent > 0, "Partner percent must not be zero");
         require(newPlatformPercent > 0, "Platform percent must not be zero");
 
-        uint256 treasuryPercentDeno = newTreasuryPercent.mul(100).div(
-            DENOMINATOR
-        );
-        uint256 partnerPercentDeno = newPartnerPercent.mul(100).div(
-            DENOMINATOR
-        );
-        uint256 platformPercentDeno = newPlatformPercent.mul(100).div(
-            DENOMINATOR
-        );
-        uint256 totalPercent = treasuryPercentDeno.add(partnerPercentDeno).add(
-            platformPercentDeno
-        );
+        uint256 treasuryPercentDeno = newTreasuryPercent * 100 / DENOMINATOR;
+        uint256 partnerPercentDeno = newPartnerPercent * 100 / DENOMINATOR;
+        uint256 platformPercentDeno = newPlatformPercent * 100 / DENOMINATOR;
+        uint256 totalPercent = treasuryPercentDeno + partnerPercentDeno + platformPercentDeno;
+
         require(totalPercent == 100, "Total percent must be 100");
         _;
     }
@@ -128,7 +119,7 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
         view
         returns (uint256 amount)
     {
-        return topupAmount.mul(treasuryPercent).div(DENOMINATOR);
+        return topupAmount * treasuryPercent / DENOMINATOR;
     }
 
     function calculatePartnerAmount(uint256 topupAmount)
@@ -136,7 +127,7 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
         view
         returns (uint256 amount)
     {
-        return topupAmount.mul(partnerPercent).div(DENOMINATOR);
+        return topupAmount * partnerPercent / DENOMINATOR;
     }
 
     function calculatePlatformAmount(uint256 topupAmount)
@@ -144,7 +135,7 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
         view
         returns (uint256 amount)
     {
-        return topupAmount.mul(platformPercent).div(DENOMINATOR);
+        return topupAmount * platformPercent / DENOMINATOR;
     }
 
     function topup(uint256 amount, string calldata refCode)
