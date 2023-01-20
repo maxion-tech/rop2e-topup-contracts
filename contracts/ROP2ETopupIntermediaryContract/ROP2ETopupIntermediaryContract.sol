@@ -61,6 +61,6 @@ contract ROP2ETopupIntermediaryContract is AccessControl {
         uint256 balanceAfter = ionStablecoinUnderlying.balanceOf(address(this));
         uint256 amountToDeposit = balanceAfter - balanceBefore;
         ionStablecoin.depositFor(address(this), amountToDeposit);
-        roP2ETopupContract.topup(amount, refCode);
+        roP2ETopupContract.topup(amountToDeposit, refCode);
     }
 }
