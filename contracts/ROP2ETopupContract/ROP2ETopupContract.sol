@@ -59,7 +59,12 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
             partnerPercentDeno +
             platformPercentDeno;
 
-        require(totalPercent == 100, "Total percent must be 100");
+        require(
+            totalPercent == 100 &&
+                newTreasuryPercent + newPartnerPercent + newPlatformPercent ==
+                10**10,
+            "Total percent must be 100"
+        );
         _;
     }
 
@@ -91,7 +96,8 @@ contract ROP2ETopupContract is Pausable, AccessControl, ReentrancyGuard {
             "Platform address must not be zero"
         );
         require(
-            address(_adminAddress) != address(0) && address(_adminAddress) != msg.sender,
+            address(_adminAddress) != address(0) &&
+                address(_adminAddress) != msg.sender,
             "Admin address must not be zero or msg.sender"
         );
 
