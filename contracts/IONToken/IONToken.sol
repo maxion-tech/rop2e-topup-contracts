@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Wrapper.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract IONStablecoin is ERC20Wrapper, Pausable, AccessControl {
+contract IONToken is ERC20Wrapper, Pausable, AccessControl {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant ZERO_FEE_ROLE = keccak256("ZERO_FEE_ROLE");
 
