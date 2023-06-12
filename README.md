@@ -1,6 +1,6 @@
-# ROverse Topup Smart Contracts
+# LandVerse Topup Smart Contracts
 
-This project is for development ROverse game topup by ERC20 token
+This project is for development LandVerse game topup by ERC20 token
 
 Try running some of the following tasks:
 

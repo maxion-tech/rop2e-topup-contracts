@@ -10,19 +10,19 @@ async function main() {
     !ADMIN_ADDRESS) {
     throw new Error("Parameter form env file not correct");
   }
-  const roverseTopupIntermediaryContractFactory = await ethers.getContractFactory("ROverseTopupIntermediaryContract");
+  const landverseTopupIntermediaryContractFactory = await ethers.getContractFactory("LandVerseTopupIntermediaryContract");
 
-  const roverseTopupIntermediaryContract = await roverseTopupIntermediaryContractFactory.deploy(
+  const landverseTopupIntermediaryContract = await landverseTopupIntermediaryContractFactory.deploy(
     ION_TOKEN_ADDRESS,
     TOPUP_CONTRACT_ADDRESS,
     ADMIN_ADDRESS,
   );
 
-  await roverseTopupIntermediaryContract.deployed();
+  await landverseTopupIntermediaryContract.deployed();
 
-  console.log(`Deployed ROverse Topup Intermediary contract to ${roverseTopupIntermediaryContract.address}`);
+  console.log(`Deployed LandVerse Topup Intermediary contract to ${landverseTopupIntermediaryContract.address}`);
   console.log(`Verify contract by:
-  npx hardhat verify --network ${hre.network.name} ${roverseTopupIntermediaryContract.address} ${ION_TOKEN_ADDRESS} ${TOPUP_CONTRACT_ADDRESS} ${ADMIN_ADDRESS}`);
+  npx hardhat verify --network ${hre.network.name} ${landverseTopupIntermediaryContract.address} ${ION_TOKEN_ADDRESS} ${TOPUP_CONTRACT_ADDRESS} ${ADMIN_ADDRESS}`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

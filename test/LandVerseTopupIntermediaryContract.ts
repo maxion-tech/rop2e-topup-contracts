@@ -76,7 +76,7 @@ describe("Intermediary contract", function () {
         const currencyTokenContractNew = await currencyTokenContractFactory.deploy("CurrencyNew", "CURRENCY-NEW");
 
 
-        const topupContractFactory = await ethers.getContractFactory("ROverseTopupContract");
+        const topupContractFactory = await ethers.getContractFactory("LandVerseTopupContract");
 
         const topupContract = await topupContractFactory.deploy(
             currencyTokenContract.address,
@@ -120,10 +120,10 @@ describe("Intermediary contract", function () {
 
         const [owner, admin, topupAccount] = await ethers.getSigners();
 
-        const roverseTopupIntermediaryContractFactory = await ethers.getContractFactory("ROverseTopupIntermediaryContract");
-        const roverseTopupIntermediaryContract = await roverseTopupIntermediaryContractFactory.deploy(ionToken.address, topupContract.address, admin.address);
+        const landverseTopupIntermediaryContractFactory = await ethers.getContractFactory("LandVerseTopupIntermediaryContract");
+        const landverseTopupIntermediaryContract = await landverseTopupIntermediaryContractFactory.deploy(ionToken.address, topupContract.address, admin.address);
 
-        const TOPUP_ROLE = await roverseTopupIntermediaryContract.TOPUP_ROLE();
+        const TOPUP_ROLE = await landverseTopupIntermediaryContract.TOPUP_ROLE();
 
         // Set new currency
         await topupContract.connect(admin).setCurrencyTokenAddress(ionToken.address);
@@ -143,7 +143,7 @@ describe("Intermediary contract", function () {
             // Topup intermediary
             owner,
             admin,
-            roverseTopupIntermediaryContract,
+            landverseTopupIntermediaryContract,
             topupAccount,
             TOPUP_ROLE,
         };
@@ -153,7 +153,7 @@ describe("Intermediary contract", function () {
         it("Should topup successfully by topup account with topup role", async () => {
             const {
                 // Topup intermediary
-                roverseTopupIntermediaryContract,
+                landverseTopupIntermediaryContract,
                 topupAccount,
                 TOPUP_ROLE,
                 // ION token
@@ -166,14 +166,14 @@ describe("Intermediary contract", function () {
                 ZERO_FEE_ROLE
             } = await deployFixtureTopupIntermediaryContract();
             // Add zero fee role to intermediary contract
-            await ionToken.connect(IONTokenAdmin).grantRole(ZERO_FEE_ROLE, roverseTopupIntermediaryContract.address);
-            await roverseTopupIntermediaryContract.connect(admin).grantRole(TOPUP_ROLE, topupAccount.address);
+            await ionToken.connect(IONTokenAdmin).grantRole(ZERO_FEE_ROLE, landverseTopupIntermediaryContract.address);
+            await landverseTopupIntermediaryContract.connect(admin).grantRole(TOPUP_ROLE, topupAccount.address);
 
             await underlyingToken.mint(topupAccount.address, ethers.utils.parseEther("1000"));
             expect(await underlyingToken.balanceOf(topupAccount.address)).to.eq(ethers.utils.parseEther("1000"));
-            await underlyingToken.connect(topupAccount).approve(roverseTopupIntermediaryContract.address, ethers.constants.MaxUint256);
+            await underlyingToken.connect(topupAccount).approve(landverseTopupIntermediaryContract.address, ethers.constants.MaxUint256);
 
-            await roverseTopupIntermediaryContract.connect(topupAccount).topup(ethers.utils.parseEther("100"), "REF_CODE");
+            await landverseTopupIntermediaryContract.connect(topupAccount).topup(ethers.utils.parseEther("100"), "REF_CODE");
             expect(await underlyingToken.balanceOf(topupAccount.address)).to.eq(ethers.utils.parseEther("900"));
         });
     });

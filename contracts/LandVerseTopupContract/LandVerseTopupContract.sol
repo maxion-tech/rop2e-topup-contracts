@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract ROverseTopupContract is Pausable, AccessControl, ReentrancyGuard {
+contract LandVerseTopupContract is Pausable, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 private constant DENOMINATOR = 10**10; // 10**10

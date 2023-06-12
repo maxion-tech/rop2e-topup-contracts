@@ -4,16 +4,16 @@ pragma solidity =0.8.7;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./interfaces/IIONToken.sol";
-import "./interfaces/IROverseTopupContract.sol";
+import "./interfaces/ILandVerseTopupContract.sol";
 
-contract ROverseTopupIntermediaryContract is AccessControl {
+contract LandVerseTopupIntermediaryContract is AccessControl {
     using SafeERC20 for IERC20;
 
     bytes32 public constant TOPUP_ROLE = keccak256("TOPUP_ROLE");
     uint256 constant MAX_INT = 2**256 - 1;
 
     IIONToken ionToken;
-    IIROverseTopupContract roverseTopupContract;
+    ILandVerseTopupContract landverseTopupContract;
     IERC20 ionTokenUnderlying;
 
     event EventTopup(uint256 amount, string refCode);
@@ -21,7 +21,7 @@ contract ROverseTopupIntermediaryContract is AccessControl {
     constructor(address _ionTokenAddress, address _topupContractAddress, address _adminAddress) {
         ionToken = IIONToken(_ionTokenAddress);
         ionTokenUnderlying = IERC20(ionToken.underlying());
-        roverseTopupContract = IIROverseTopupContract(_topupContractAddress);
+        landverseTopupContract = ILandVerseTopupContract(_topupContractAddress);
         ionTokenUnderlying.approve(_ionTokenAddress, MAX_INT);
         IERC20(address(ionToken)).approve(_topupContractAddress, MAX_INT);
         
@@ -40,7 +40,7 @@ contract ROverseTopupIntermediaryContract is AccessControl {
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         IERC20(address(ionToken)).approve(
-            address(roverseTopupContract),
+            address(landverseTopupContract),
             amount
         );
     }
@@ -61,6 +61,6 @@ contract ROverseTopupIntermediaryContract is AccessControl {
         uint256 balanceAfter = ionTokenUnderlying.balanceOf(address(this));
         uint256 amountToDeposit = balanceAfter - balanceBefore;
         ionToken.depositFor(address(this), amountToDeposit);
-        roverseTopupContract.topup(amountToDeposit, refCode);
+        landverseTopupContract.topup(amountToDeposit, refCode);
     }
 }
