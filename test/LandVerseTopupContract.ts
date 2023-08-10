@@ -34,7 +34,7 @@ describe("Topup contract", function () {
     const currencyTokenContractNew = await currencyTokenContractFactory.deploy("CurrencyNew", "CURRENCY-NEW");
 
 
-    const topupContractFactory = await ethers.getContractFactory("ROP2ETopupContract");
+    const topupContractFactory = await ethers.getContractFactory("LandVerseTopupContract");
 
     const topupContract = await topupContractFactory.deploy(
       currencyTokenContract.address,

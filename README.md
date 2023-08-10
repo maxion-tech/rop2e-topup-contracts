@@ -1,6 +1,6 @@
-# ROP2E Topup Smart Contracts
+# LandVerse Topup Smart Contracts
 
-This project is for development ROP2E game topup by ERC20 token
+This project is for development LandVerse game topup by ERC20 token
 
 Try running some of the following tasks:
 
