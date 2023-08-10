@@ -29,9 +29,9 @@ async function main() {
 
     const landverseTopupContractFactory = await ethers.getContractFactory("LandVerseTopupContract");
 
-    const treasuryPercent = ethers.BigNumber.from(30 * 10 ** 8); // 30%
-    const partnerPercent = ethers.BigNumber.from(42 * 10 ** 8); // 42%
-    const platformPercent = ethers.BigNumber.from(28 * 10 ** 8); // 28%
+    const treasuryPercent = ethers.BigNumber.from(25 * 10 ** 8); // 25%
+    const partnerPercent = ethers.BigNumber.from(30 * 10 ** 8); // 30%
+    const platformPercent = ethers.BigNumber.from(45 * 10 ** 8); // 45%
 
     const landverseTopupContract = await landverseTopupContractFactory.connect(signer).deploy(
         CURRENCY_TOKEN_ADDRESS,

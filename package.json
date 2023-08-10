@@ -5,9 +5,10 @@
     "clean": "hardhat clean",
     "test": "hardhat test",
     "deploy-topup:bscTestnet": "hardhat run scripts/deploy_topup.ts --network bscTestnet",
+    "deploy-topup:bscTestnet:hw": "source .env && hardhat run scripts/deploy_topup_hw.ts --network bscTestnet",
     "deploy-topup-intermediary:bscTestnet": "hardhat run scripts/deploy_topup_intermediary.ts --network bscTestnet",
-    "deploy-topup:bsc-hw": "source .env.mainnet && hardhat run scripts/deploy_topup_hw.ts --network bsc",
-    "deploy-topup-intermediary:bsc-hw": "source .env.mainnet && hardhat run scripts/deploy_topup_intermediary_hw.ts --network bsc"
+    "deploy-topup:bsc:hw": "source .env.mainnet && hardhat run scripts/deploy_topup_hw.ts --network bsc",
+    "deploy-topup-intermediary:bsc:hw": "source .env.mainnet && hardhat run scripts/deploy_topup_intermediary_hw.ts --network bsc"
   },
   "devDependencies": {
     "@ethersproject/hardware-wallets": "^5.7.0",
