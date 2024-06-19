@@ -128,7 +128,7 @@ contract LandVerseTopupContract is Pausable, AccessControl, ReentrancyGuard {
     }
 
     function calculateTreasuryAmount(uint256 topupAmount)
-        external
+        public
         view
         returns (uint256 amount)
     {
@@ -136,7 +136,7 @@ contract LandVerseTopupContract is Pausable, AccessControl, ReentrancyGuard {
     }
 
     function calculatePartnerAmount(uint256 topupAmount)
-        external
+        public
         view
         returns (uint256 amount)
     {
@@ -144,7 +144,7 @@ contract LandVerseTopupContract is Pausable, AccessControl, ReentrancyGuard {
     }
 
     function calculatePlatformAmount(uint256 topupAmount)
-        external
+        public
         view
         returns (uint256 amount)
     {
@@ -157,9 +157,9 @@ contract LandVerseTopupContract is Pausable, AccessControl, ReentrancyGuard {
         whenNotPaused
     {
         require(bytes(refCode).length > 0, "Ref code must not be empty");
-        uint256 treasuryAmount = this.calculateTreasuryAmount(amount);
-        uint256 partnerAmount = this.calculatePartnerAmount(amount);
-        uint256 platformAmount = this.calculatePlatformAmount(amount);
+        uint256 treasuryAmount = calculateTreasuryAmount(amount);
+        uint256 partnerAmount = calculatePartnerAmount(amount);
+        uint256 platformAmount = calculatePlatformAmount(amount);
         emit EventTopup(
             amount,
             refCode,
